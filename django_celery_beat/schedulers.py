@@ -44,13 +44,17 @@ debug, info, warning = logger.debug, logger.info, logger.warning
 
 
 class ModelEntry(ScheduleEntry):
-    """Scheduler entry taken from database row."""
+    """Scheduler entry taken from database row.
+    
+    从数据库获取的ScheduleEntry，每一条row是一个ScheduleEntry实例。
+    """
 
     model_schedules = (
         (schedules.crontab, CrontabSchedule, 'crontab'),
         (schedules.schedule, IntervalSchedule, 'interval'),
         (schedules.solar, SolarSchedule, 'solar'),
     )
+    # 存储的字段
     save_fields = ['last_run_at', 'total_run_count', 'no_changes']
 
     def __init__(self, model, app=None):
@@ -92,11 +96,13 @@ class ModelEntry(ScheduleEntry):
         self.last_run_at = make_aware(model.last_run_at)
 
     def _disable(self, model):
+        """禁用"""
         model.no_changes = True
         model.enabled = False
         model.save()
 
     def is_due(self):
+        """是否到期"""
         if not self.model.enabled:
             # 5 second delay for re-enable.
             return schedules.schedstate(False, 5.0)
@@ -175,6 +181,7 @@ class ModelEntry(ScheduleEntry):
     @classmethod
     def _unpack_options(cls, queue=None, exchange=None, routing_key=None,
                         priority=None, **kwargs):
+        """options解包成dict"""
         return {
             'queue': queue,
             'exchange': exchange,
@@ -190,7 +197,10 @@ class ModelEntry(ScheduleEntry):
 
 
 class DatabaseScheduler(Scheduler):
-    """Database-backed Beat Scheduler."""
+    """Database-backed Beat Scheduler.
+
+    数据库后端Baet Scheduler。
+    """
 
     Entry = ModelEntry
     Model = PeriodicTask
@@ -264,6 +274,7 @@ class DatabaseScheduler(Scheduler):
         return new_entry
 
     def sync(self):
+        """同步"""
         info('Writing entries...')
         _tried = set()
         _failed = set()

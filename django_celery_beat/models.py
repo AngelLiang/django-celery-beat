@@ -16,7 +16,7 @@ from . import managers, validators
 from .tzcrontab import TzAwareCrontab
 from .utils import make_aware, now
 
-
+# 字面量（literals）
 DAYS = 'days'
 HOURS = 'hours'
 MINUTES = 'minutes'
@@ -247,10 +247,12 @@ class PeriodicTasks(models.Model):
 class PeriodicTask(models.Model):
     """Model representing a periodic task."""
 
+    # 名称
     name = models.CharField(
         _('name'), max_length=200, unique=True,
         help_text=_('Useful description'),
     )
+    # 任务名称
     task = models.CharField(_('task name'), max_length=200)
     interval = models.ForeignKey(
         IntervalSchedule, on_delete=models.CASCADE,
@@ -264,24 +266,30 @@ class PeriodicTask(models.Model):
         SolarSchedule, on_delete=models.CASCADE, null=True, blank=True,
         verbose_name=_('solar'), help_text=_('Use a solar schedule')
     )
+    # 参数
     args = models.TextField(
         _('Arguments'), blank=True, default='[]',
         help_text=_('JSON encoded positional arguments'),
     )
+    # 参数
     kwargs = models.TextField(
         _('Keyword arguments'), blank=True, default='{}',
         help_text=_('JSON encoded keyword arguments'),
     )
+    # 队列
     queue = models.CharField(
         _('queue'), max_length=200, blank=True, null=True, default=None,
         help_text=_('Queue defined in CELERY_TASK_QUEUES'),
     )
+    # 交换器
     exchange = models.CharField(
         _('exchange'), max_length=200, blank=True, null=True, default=None,
     )
+    # 路由键
     routing_key = models.CharField(
         _('routing key'), max_length=200, blank=True, null=True, default=None,
     )
+    # 优先级
     priority = models.PositiveIntegerField(
         _('priority'), default=None, validators=[MaxValueValidator(255)],
         blank=True, null=True
@@ -292,20 +300,26 @@ class PeriodicTask(models.Model):
     one_off = models.BooleanField(
         _('one-off task'), default=False,
     )
+    # 开始时间
     start_time = models.DateTimeField(
         _('start_time'), blank=True, null=True,
     )
+    # 使能/禁能
     enabled = models.BooleanField(
         _('enabled'), default=True,
     )
+    # 最后运行时间
     last_run_at = models.DateTimeField(
         auto_now=False, auto_now_add=False,
         editable=False, blank=True, null=True,
     )
+    # 总运行次数
     total_run_count = models.PositiveIntegerField(
         default=0, editable=False,
     )
+    # 修改时间
     date_changed = models.DateTimeField(auto_now=True)
+    # 说明
     description = models.TextField(_('description'), blank=True)
 
     objects = managers.PeriodicTaskManager()
