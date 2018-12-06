@@ -169,6 +169,7 @@ class ModelEntry(ScheduleEntry):
     def _unpack_fields(cls, schedule,
                        args=None, kwargs=None, relative=None, options=None,
                        **entry):
+        """解包成字段"""
         model_schedule, model_field = cls.to_model_schedule(schedule)
         entry.update(
             {model_field: model_schedule},
