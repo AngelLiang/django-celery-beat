@@ -52,6 +52,7 @@ class ModelEntry(ScheduleEntry):
     model_schedules = (
         # (celery schedule_type, my model_type, model_field)
         (schedules.crontab, CrontabSchedule, 'crontab'),
+        # bug: 下面语句的 schedules.schedule 可能应该是 schedules.interval
         (schedules.schedule, IntervalSchedule, 'interval'),
         (schedules.solar, SolarSchedule, 'solar'),
     )
@@ -116,6 +117,7 @@ class ModelEntry(ScheduleEntry):
         """是否到期
         override
         """
+        # TODO:
         if not self.model.enabled:
             # 5 second delay for re-enable.
             return schedules.schedstate(False, 5.0)
@@ -134,7 +136,7 @@ class ModelEntry(ScheduleEntry):
             self.model.enabled = False
             self.model.total_run_count = 0  # Reset
             self.model.no_changes = False  # Mark the model entry as changed
-            self.model.save()   # 保存到数据库
+            self.model.save()   # 保存到数据库，需要改写
             return schedules.schedstate(False, None)  # Don't recheck
 
         return self.schedule.is_due(self.last_run_at)
@@ -190,7 +192,15 @@ class ModelEntry(ScheduleEntry):
     def _unpack_fields(cls, schedule,
                        args=None, kwargs=None, relative=None, options=None,
                        **entry):
-        """解包成字段"""
+        """解包成字段
+
+        **entry sample:
+
+            {'task': 'celery.backend_cleanup',
+             'schedule': <crontab: 0 4 * * * (m/h/d/dM/MY)>,
+             'options': {'expires': 43200}}
+
+        """
         model_schedule, model_field = cls.to_model_schedule(schedule)
         entry.update(
             {model_field: model_schedule},
@@ -255,6 +265,7 @@ class DatabaseScheduler(Scheduler):
         """
         debug('DatabaseScheduler: Fetching database schedule')
         s = {}
+        # 遍历使能的定时任务
         for model in self.Model.objects.enabled():
             try:
                 s[model.name] = self.Entry(model, app=self.app)
@@ -315,7 +326,7 @@ class DatabaseScheduler(Scheduler):
             while self._dirty:
                 name = self._dirty.pop()
                 try:
-                    self.schedule[name].save()
+                    self.schedule[name].save()  # 保存到数据库，需要改写
                     _tried.add(name)
                 except (KeyError, ObjectDoesNotExist) as exc:
                     _failed.add(name)
