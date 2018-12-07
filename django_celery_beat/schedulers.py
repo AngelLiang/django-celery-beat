@@ -60,25 +60,15 @@ class ModelEntry(ScheduleEntry):
     save_fields = ['last_run_at', 'total_run_count', 'no_changes']
 
     def __init__(self, model, app=None):
-<<<<<<< Updated upstream
         """Initialize the model entry.
 
         重写 ScheduleEntry.__init__
         """
-=======
-        """Initialize the model entry."""
-
-        # 获取当前 celery app 的实例
->>>>>>> Stashed changes
         self.app = app or current_app._get_current_object()
         self.name = model.name
         self.task = model.task
 
-<<<<<<< Updated upstream
         # 获取 model 的 schedule
-=======
-        # 获取schedule
->>>>>>> Stashed changes
         try:
             self.schedule = model.schedule
         except model.DoesNotExist:
@@ -88,11 +78,7 @@ class ModelEntry(ScheduleEntry):
             )
             self._disable(model)
 
-<<<<<<< Updated upstream
         # 获取 model 的参数
-=======
-        # 获取参数
->>>>>>> Stashed changes
         try:
             self.args = loads(model.args or '[]')
             self.kwargs = loads(model.kwargs or '{}')
@@ -274,14 +260,7 @@ class DatabaseScheduler(Scheduler):
         self.update_from_dict(self.app.conf.beat_schedule)
 
     def all_as_schedule(self):
-<<<<<<< Updated upstream
-        """
-
-        如果换为SQLAchemy，这个方法需要改写
-        """
-=======
         """加载数据库中所有的schedule"""
->>>>>>> Stashed changes
         debug('DatabaseScheduler: Fetching database schedule')
         s = {}
         # 遍历使能的定时任务
@@ -293,14 +272,7 @@ class DatabaseScheduler(Scheduler):
         return s
 
     def schedule_changed(self):
-<<<<<<< Updated upstream
-        """
-
-        如果换为SQLAchemy，这个方法需要改写
-        """
-=======
         """检查数据库中的schedule配置是否有变化"""
->>>>>>> Stashed changes
         try:
             close_old_connections()
 
@@ -332,6 +304,7 @@ class DatabaseScheduler(Scheduler):
         return False
 
     def reserve(self, entry):
+        """储存entry"""
         new_entry = next(entry)
         # Need to store entry by name, because the entry may change
         # in the mean time.
@@ -350,7 +323,9 @@ class DatabaseScheduler(Scheduler):
             while self._dirty:
                 name = self._dirty.pop()
                 try:
-                    self.schedule[name].save()  # 保存到数据库，需要改写
+                    # 设置 self.schedule，tick 才会调度任务
+                    # 同时保存到数据库，需要改写
+                    self.schedule[name].save()
                     _tried.add(name)
                 except (KeyError, ObjectDoesNotExist) as exc:
                     _failed.add(name)
@@ -417,7 +392,7 @@ class DatabaseScheduler(Scheduler):
             self._schedule = self.all_as_schedule()
             # the schedule changed, invalidate the heap in Scheduler.tick
             if not initial:
-                self._heap = []
+                self._heap = []  # 修改了父类的 self._heap
                 self._heap_invalidated = True
             if logger.isEnabledFor(logging.DEBUG):
                 debug('Current schedule:\n%s', '\n'.join(
