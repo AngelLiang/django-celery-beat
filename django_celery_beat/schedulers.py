@@ -50,7 +50,7 @@ class ModelEntry(ScheduleEntry):
     """
 
     model_schedules = (
-        # (schedule_type, model_type, model_field)
+        # (celery schedule_type, my model_type, model_field)
         (schedules.crontab, CrontabSchedule, 'crontab'),
         (schedules.schedule, IntervalSchedule, 'interval'),
         (schedules.solar, SolarSchedule, 'solar'),
@@ -159,6 +159,7 @@ class ModelEntry(ScheduleEntry):
         # change the fields we care about.
         # 对象可能没有同步，所以只修改我们关心的字段。
         obj = type(self.model)._default_manager.get(pk=self.model.pk)
+        # 获取需要保存的字段并更新model
         for field in self.save_fields:
             setattr(obj, field, getattr(self.model, field))
         obj.save()
@@ -168,6 +169,7 @@ class ModelEntry(ScheduleEntry):
         for schedule_type, model_type, model_field in cls.model_schedules:
             # 转换为 schedule
             schedule = schedules.maybe_schedule(schedule)
+            # 如果 schedule 和 celery 的 schedule_type 匹配
             if isinstance(schedule, schedule_type):
                 model_schedule = model_type.from_schedule(schedule)
                 model_schedule.save()
@@ -177,6 +179,7 @@ class ModelEntry(ScheduleEntry):
 
     @classmethod
     def from_entry(cls, name, app=None, **entry):
+        """传入entry，创建实例"""
         return cls(PeriodicTask._default_manager.update_or_create(
             name=name, defaults=cls._unpack_fields(**entry),
         ), app=app)
