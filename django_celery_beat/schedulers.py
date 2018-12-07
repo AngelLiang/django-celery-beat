@@ -60,15 +60,25 @@ class ModelEntry(ScheduleEntry):
     save_fields = ['last_run_at', 'total_run_count', 'no_changes']
 
     def __init__(self, model, app=None):
+<<<<<<< Updated upstream
         """Initialize the model entry.
 
         重写 ScheduleEntry.__init__
         """
+=======
+        """Initialize the model entry."""
+
+        # 获取当前 celery app 的实例
+>>>>>>> Stashed changes
         self.app = app or current_app._get_current_object()
         self.name = model.name
         self.task = model.task
 
+<<<<<<< Updated upstream
         # 获取 model 的 schedule
+=======
+        # 获取schedule
+>>>>>>> Stashed changes
         try:
             self.schedule = model.schedule
         except model.DoesNotExist:
@@ -78,7 +88,11 @@ class ModelEntry(ScheduleEntry):
             )
             self._disable(model)
 
+<<<<<<< Updated upstream
         # 获取 model 的参数
+=======
+        # 获取参数
+>>>>>>> Stashed changes
         try:
             self.args = loads(model.args or '[]')
             self.kwargs = loads(model.kwargs or '{}')
@@ -174,8 +188,9 @@ class ModelEntry(ScheduleEntry):
             schedule = schedules.maybe_schedule(schedule)
             # 如果 schedule 和 celery 的 schedule_type 匹配
             if isinstance(schedule, schedule_type):
+                # 生成model
                 model_schedule = model_type.from_schedule(schedule)
-                model_schedule.save()
+                model_schedule.save()   # 保存到数据库
                 return model_schedule, model_field
         raise ValueError(
             'Cannot convert schedule type {0!r} to model'.format(schedule))
@@ -259,10 +274,14 @@ class DatabaseScheduler(Scheduler):
         self.update_from_dict(self.app.conf.beat_schedule)
 
     def all_as_schedule(self):
+<<<<<<< Updated upstream
         """
 
         如果换为SQLAchemy，这个方法需要改写
         """
+=======
+        """加载数据库中所有的schedule"""
+>>>>>>> Stashed changes
         debug('DatabaseScheduler: Fetching database schedule')
         s = {}
         # 遍历使能的定时任务
@@ -274,10 +293,14 @@ class DatabaseScheduler(Scheduler):
         return s
 
     def schedule_changed(self):
+<<<<<<< Updated upstream
         """
 
         如果换为SQLAchemy，这个方法需要改写
         """
+=======
+        """检查数据库中的schedule配置是否有变化"""
+>>>>>>> Stashed changes
         try:
             close_old_connections()
 
@@ -321,6 +344,7 @@ class DatabaseScheduler(Scheduler):
         _tried = set()
         _failed = set()
         try:
+            # 关闭旧连接
             close_old_connections()
 
             while self._dirty:
@@ -342,6 +366,7 @@ class DatabaseScheduler(Scheduler):
             self._dirty |= _failed
 
     def update_from_dict(self, mapping):
+        """从dict更新Entry"""
         s = {}
         for name, entry_fields in items(mapping):
             try:
@@ -356,6 +381,7 @@ class DatabaseScheduler(Scheduler):
         self.schedule.update(s)
 
     def install_default_entries(self, data):
+        """注册默认的Entry"""
         entries = {}
         if self.app.conf.result_expires:
             entries.setdefault(
