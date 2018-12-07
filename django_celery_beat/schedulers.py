@@ -50,6 +50,7 @@ class ModelEntry(ScheduleEntry):
     """
 
     model_schedules = (
+        # (schedule_type, model_type, model_field)
         (schedules.crontab, CrontabSchedule, 'crontab'),
         (schedules.schedule, IntervalSchedule, 'interval'),
         (schedules.solar, SolarSchedule, 'solar'),
@@ -58,7 +59,10 @@ class ModelEntry(ScheduleEntry):
     save_fields = ['last_run_at', 'total_run_count', 'no_changes']
 
     def __init__(self, model, app=None):
-        """Initialize the model entry."""
+        """Initialize the model entry.
+
+        重写 ScheduleEntry.__init__
+        """
         self.app = app or current_app._get_current_object()
         self.name = model.name
         self.task = model.task
@@ -72,7 +76,7 @@ class ModelEntry(ScheduleEntry):
                 self.name,
             )
             self._disable(model)
-        
+
         # 获取 model 的参数
         try:
             self.args = loads(model.args or '[]')
@@ -93,6 +97,8 @@ class ModelEntry(ScheduleEntry):
             self.options[option] = value
 
         self.total_run_count = model.total_run_count
+
+        # 以下属性是本类特有
         self.model = model
 
         # 设置 model 最后一次运行时间
@@ -107,7 +113,9 @@ class ModelEntry(ScheduleEntry):
         model.save()
 
     def is_due(self):
-        """是否到期"""
+        """是否到期
+        override
+        """
         if not self.model.enabled:
             # 5 second delay for re-enable.
             return schedules.schedstate(False, 5.0)
@@ -149,6 +157,7 @@ class ModelEntry(ScheduleEntry):
     def save(self):
         # Object may not be synchronized, so only
         # change the fields we care about.
+        # 对象可能没有同步，所以只修改我们关心的字段。
         obj = type(self.model)._default_manager.get(pk=self.model.pk)
         for field in self.save_fields:
             setattr(obj, field, getattr(self.model, field))
@@ -157,6 +166,7 @@ class ModelEntry(ScheduleEntry):
     @classmethod
     def to_model_schedule(cls, schedule):
         for schedule_type, model_type, model_field in cls.model_schedules:
+            # 转换为 schedule
             schedule = schedules.maybe_schedule(schedule)
             if isinstance(schedule, schedule_type):
                 model_schedule = model_type.from_schedule(schedule)
