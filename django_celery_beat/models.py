@@ -70,6 +70,7 @@ class SolarSchedule(models.Model):
 
     @classmethod
     def from_schedule(cls, schedule):
+        """传入 schedule 返回对应的 model"""
         spec = {'event': schedule.event,
                 'latitude': schedule.lat,
                 'longitude': schedule.lon}
@@ -122,6 +123,7 @@ class IntervalSchedule(models.Model):
 
     @classmethod
     def from_schedule(cls, schedule, period=SECONDS):
+        """传入 schedule 返回对应的 model"""
         every = max(schedule.run_every.total_seconds(), 0)
         try:
             return cls.objects.get(every=every, period=period)
@@ -379,17 +381,23 @@ class PeriodicTask(models.Model):
         if self.solar:
             return self.solar.schedule
 
-
+# 当 PeriodicTask 删除或保存时，发送信号给 PeriodicTasks.changed
 signals.pre_delete.connect(PeriodicTasks.changed, sender=PeriodicTask)
 signals.pre_save.connect(PeriodicTasks.changed, sender=PeriodicTask)
+
+# 当 IntervalSchedule 删除或保存时，发送信号给 PeriodicTasks.changed
 signals.pre_delete.connect(
     PeriodicTasks.update_changed, sender=IntervalSchedule)
 signals.post_save.connect(
     PeriodicTasks.update_changed, sender=IntervalSchedule)
+
+# 当 CrontabSchedule 删除或保存时，发送信号给 PeriodicTasks.changed
 signals.post_delete.connect(
     PeriodicTasks.update_changed, sender=CrontabSchedule)
 signals.post_save.connect(
     PeriodicTasks.update_changed, sender=CrontabSchedule)
+
+# 当 SolarSchedule 删除或保存时，发送信号给 PeriodicTasks.changed
 signals.post_delete.connect(
     PeriodicTasks.update_changed, sender=SolarSchedule)
 signals.post_save.connect(

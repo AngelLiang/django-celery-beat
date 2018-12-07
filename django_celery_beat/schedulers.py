@@ -45,7 +45,7 @@ debug, info, warning = logger.debug, logger.info, logger.warning
 
 class ModelEntry(ScheduleEntry):
     """Scheduler entry taken from database row.
-    
+
     从数据库获取的ScheduleEntry，每一条row是一个ScheduleEntry实例。
     """
 
@@ -62,6 +62,8 @@ class ModelEntry(ScheduleEntry):
         self.app = app or current_app._get_current_object()
         self.name = model.name
         self.task = model.task
+
+        # 获取 model 的 schedule
         try:
             self.schedule = model.schedule
         except model.DoesNotExist:
@@ -70,6 +72,8 @@ class ModelEntry(ScheduleEntry):
                 self.name,
             )
             self._disable(model)
+        
+        # 获取 model 的参数
         try:
             self.args = loads(model.args or '[]')
             self.kwargs = loads(model.kwargs or '{}')
@@ -91,6 +95,7 @@ class ModelEntry(ScheduleEntry):
         self.total_run_count = model.total_run_count
         self.model = model
 
+        # 设置 model 最后一次运行时间
         if not model.last_run_at:
             model.last_run_at = self._default_now()
         self.last_run_at = make_aware(model.last_run_at)
@@ -127,6 +132,7 @@ class ModelEntry(ScheduleEntry):
         return self.schedule.is_due(self.last_run_at)
 
     def _default_now(self):
+        """当前默认时间"""
         now = self.app.now()
         # The PyTZ datetime must be localised for the Django-Celery-Beat
         # scheduler to work. Keep in mind that timezone arithmatic
