@@ -239,10 +239,15 @@ class DatabaseScheduler(Scheduler):
             or DEFAULT_MAX_INTERVAL)
 
     def setup_schedule(self):
+        """override"""
         self.install_default_entries(self.schedule)
         self.update_from_dict(self.app.conf.beat_schedule)
 
     def all_as_schedule(self):
+        """
+
+        如果换为SQLAchemy，这个方法需要改写
+        """
         debug('DatabaseScheduler: Fetching database schedule')
         s = {}
         for model in self.Model.objects.enabled():
@@ -253,6 +258,10 @@ class DatabaseScheduler(Scheduler):
         return s
 
     def schedule_changed(self):
+        """
+
+        如果换为SQLAchemy，这个方法需要改写
+        """
         try:
             close_old_connections()
 
@@ -291,7 +300,7 @@ class DatabaseScheduler(Scheduler):
         return new_entry
 
     def sync(self):
-        """同步"""
+        """同步，override"""
         info('Writing entries...')
         _tried = set()
         _failed = set()
@@ -351,6 +360,7 @@ class DatabaseScheduler(Scheduler):
     @property
     def schedule(self):
         initial = update = False
+        # 第一次读取
         if self._initial_read:
             debug('DatabaseScheduler: initial read')
             initial = update = True
@@ -361,6 +371,7 @@ class DatabaseScheduler(Scheduler):
 
         if update:
             self.sync()
+            # 从数据库获取所有的schedule
             self._schedule = self.all_as_schedule()
             # the schedule changed, invalidate the heap in Scheduler.tick
             if not initial:
