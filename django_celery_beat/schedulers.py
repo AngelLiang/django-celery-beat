@@ -134,7 +134,7 @@ class ModelEntry(ScheduleEntry):
             self.model.enabled = False
             self.model.total_run_count = 0  # Reset
             self.model.no_changes = False  # Mark the model entry as changed
-            self.model.save()
+            self.model.save()   # 保存到数据库
             return schedules.schedstate(False, None)  # Don't recheck
 
         return self.schedule.is_due(self.last_run_at)
@@ -155,6 +155,7 @@ class ModelEntry(ScheduleEntry):
     next = __next__  # for 2to3
 
     def save(self):
+        # TODO:
         # Object may not be synchronized, so only
         # change the fields we care about.
         # 对象可能没有同步，所以只修改我们关心的字段。
@@ -180,6 +181,7 @@ class ModelEntry(ScheduleEntry):
     @classmethod
     def from_entry(cls, name, app=None, **entry):
         """传入entry，创建实例"""
+        # TODO:
         return cls(PeriodicTask._default_manager.update_or_create(
             name=name, defaults=cls._unpack_fields(**entry),
         ), app=app)
