@@ -103,6 +103,7 @@ class ModelEntry(ScheduleEntry):
         self.model = model
 
         # 设置 model 最后一次运行时间
+        # 如果停止服务一段时间后再启动，该最后运行时间可能需要重新计算
         if not model.last_run_at:
             model.last_run_at = self._default_now()
         self.last_run_at = make_aware(model.last_run_at)
@@ -150,6 +151,7 @@ class ModelEntry(ScheduleEntry):
         return now.tzinfo.localize(now.replace(tzinfo=None))
 
     def __next__(self):
+        """更新下一次运行时间，并返回新的实例"""
         self.model.last_run_at = self.app.now()
         self.model.total_run_count += 1
         self.model.no_changes = True
@@ -304,7 +306,7 @@ class DatabaseScheduler(Scheduler):
         return False
 
     def reserve(self, entry):
-        """储存entry"""
+        """存储entry"""
         new_entry = next(entry)
         # Need to store entry by name, because the entry may change
         # in the mean time.
@@ -323,8 +325,8 @@ class DatabaseScheduler(Scheduler):
             while self._dirty:
                 name = self._dirty.pop()
                 try:
-                    # 设置 self.schedule，tick 才会调度任务
-                    # 同时保存到数据库，需要改写
+                    # 保存到数据库，需要先实现 ModelEntry.save()
+                    # self.schedule[name] 是 ModelEntry 实例
                     self.schedule[name].save()
                     _tried.add(name)
                 except (KeyError, ObjectDoesNotExist) as exc:
